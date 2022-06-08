@@ -1,0 +1,19 @@
+start: ベンティアドショットヘーゼルナッツバニラアーモンドキャラメルエキストラホイップキャラメルソースモカソースランバチップチョコレートクリームフラペチーノ(1116435)
+goal: KONAMI(56154)
+Route start: ->ベンティアドショットヘーゼルナッツバニラアーモンドキャラメルエキストラホイップキャラメルソースモカソースランバチップチョコレートクリームフラペチーノ
+->スターバックス
+->群馬県
+->リンダ_リンダ_リンダ
+->Base_Ball_Bear
+->CYPRESS_GIRLS
+->DETECTIVE_BOYS
+->Yoakemae
+->Short_hair
+->Tabibito_In_The_Dark/スローモーションをもう一度_part.2
+->Yoakemae-no-yoakemae
+->新呼吸
+->PERFECT_BLUE
+->バンドBのベスト
+->THE_CUT
+->ファンファーレがきこえる/senkou_hanabi
+->KONAMI

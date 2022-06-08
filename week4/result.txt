@@ -1,0 +1,35 @@
+start: Google(457783)
+goal: 渋谷(22557)
+Route start: ->Google
+->MSN
+->インフォシーク
+->ぷらら
+->エキサイト
+->Yahoo!_JAPAN
+->Yahoo!グループ
+->Yahoo!ショッピング
+->ジオシティーズ
+->Yahoo!辞書
+->Yahoo!_BB
+->GYAO!
+->Yahoo!チャット
+->Yahoo!翻訳
+->Yahoo!_Days
+->Yahoo!メッセンジャー
+->Yahoo!ウォレット
+->ジャパンネット銀行
+->Yahoo!インターネット検定
+->Yahoo!ケータイ
+->Yahoo!リクナビ
+->Yahoo!モバイル
+->ヤフオク!
+->Yahoo!ブログ
+->Yahoo!メール
+->Yahoo!みんなの検定
+->月刊チャージャー
+->ドロップキューブ
+->ポケモンガーデン
+->Yahoo!ブックストア
+->Yahoo!_Internet_Guide
+->Yahoo!_Cafe
+->渋谷
