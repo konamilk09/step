@@ -3,6 +3,7 @@
 - `data/` 入力データと出力データ
 - `common.py` `output_vertifier.py` に必要
 - `four.cpp` 貪欲法の後、2-optで改良
+  - `greedy.cpp` に1つ関数を加えただけなのでこちらだけ見ていただければと思います。
 - `greedy.cpp` 貪欲法
 - `output_vertifier.py` 出力されたファイルを読み込んで経路の長さを表示
 
