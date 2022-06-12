@@ -4,8 +4,10 @@
 #include <cmath>
 #include <set>
 #include <cfloat>
+#include <cassert>
 #include <string>
 
+/* 1つの点：x座標とy座標 */
 class City {
 private:
     std::pair<double, double> point;
@@ -27,6 +29,8 @@ double City::y() const {
     return point.second;
 }
 
+/* 入力ファイル読み込み：番号の文字列を受け取ったらその番号のファイルを読み込み、
+   std::vector<City> 型の点の座標の配列を返す */
 std::vector<City> read_input(const std::string& filenum) {
     std::vector<City> cities;
 
@@ -38,8 +42,8 @@ std::vector<City> read_input(const std::string& filenum) {
 	}
 
     std::string data;
-    // 1行目の x,y を受け取っておく
-    std::getline(fin, data);
+    /* 1行目が x,y となっていることを確認する。 */
+    assert(std::getline(fin, data) && data=="x,y");
     while(std::getline(fin, data)) {
         auto index = data.find(',');
         auto x = data.substr(0, index);
@@ -58,16 +62,16 @@ std::vector<City> read_input(const std::string& filenum) {
 
     fin.close();
 
-        return cities;
+    return cities;
 }
 
-// 2点間の距離を計算する
+/* 2点間の距離を計算する */
 double distance(const City& city1, const City& city2) {
     return std::sqrt(std::pow(city1.x()-city2.x(), 2.0)+std::pow(city1.y()-city2.y(), 2.0));
 }
 
-// 2点間の距離を配列に代入する
-std::vector<std::vector<double>> calc_dist(
+/* 2点間の距離を配列に代入する */
+std::vector<std::vector<double>> init_dist(
     const std::vector<City>& cities,
     const int& N) 
 {
@@ -80,6 +84,7 @@ std::vector<std::vector<double>> calc_dist(
     return dist;
 }
 
+/* 二つの整数 a,b (a<b) を受け取り、要素が a から b-1 までの整数の set を返す */
 std::set<int> init_set(const int& start, const int& end) {
     std::set<int> s;
     for(int i=start; i<end; i++) {
@@ -88,14 +93,13 @@ std::set<int> init_set(const int& start, const int& end) {
     return s;
 }
 
-// 1点と、2点間の距離の配列と、まだ辿っていない点のセットを受け取って、
-// 1点と一番近い点を返す
+/* 1点と、2点間の距離の配列と、まだ辿っていない点の set を受け取って、
+   1点と一番近い点を返す */
 int min_city(
     const int& city,
     const std::vector<std::vector<double>>& dist,
     const std::set<int>& unvisited_cities) 
 {
-
     double min_dist = DBL_MAX;
     int next_city;
     for(const int& unvisited_city : unvisited_cities) {
@@ -107,6 +111,8 @@ int min_city(
     return next_city;
 }
 
+/* 貪欲法：0をスタート地点として、まだ辿っていない点のうち一番今の点に近い点を次行く点とする
+   辿る順番の配列を返す */
 std::vector<int> greedy(
     const std::vector<City>& cities, 
     const std::vector<std::vector<double>>& dist, 
@@ -131,7 +137,8 @@ std::vector<int> greedy(
     return tour;
 }
 
-void change_four(
+/* 2組の辺を選び、交換した方が経路が短くなったら経路を更新する。 */
+void two_opt(
     std::vector<int>& tour, 
     const std::vector<City>& cities, 
     const std::vector<std::vector<double>>& dist, 
@@ -161,6 +168,7 @@ void change_four(
     return;
 }
 
+/* 出力ファイルに実行結果を書き込む */
 void write_tour(
     const std::vector<int>& tour, 
     const std::string& filenum) 
@@ -175,13 +183,14 @@ void write_tour(
     return;
 }
 
+/* 経路の長さを標準出力する */
 void print_path_len(
     const std::vector<int>& tour,
     const std::vector<std::vector<double>>& dist) 
 {
     double ans=0;
     for(int i=0; i<tour.size()-1; i++) {
-        ans += dist[i][i+1];
+        ans += dist[tour[i]][tour[i+1]];
     }
     std::cout << ans << std::endl;
     return;
@@ -196,22 +205,26 @@ int main(int argc, char* argv[]){
     std::vector<City> cities;
     cities = read_input(argv[1]);
 
-    // すべての2点間の距離を保持する配列
     int N = cities.size();
-    std::vector<std::vector<double>> dist(N, std::vector<double>(N));
-    dist = calc_dist(cities, N);
 
+    /* すべての2点間の距離を保持する配列 */
+    std::vector<std::vector<double>> dist(N, std::vector<double>(N));
+    dist = init_dist(cities, N);
+
+    /* 経路の配列 */
     std::vector<int> tour;
     tour = greedy(cities, dist, N);
 
+    /* 経路の長さを標準出力する */
     std::cout << "after greedy: ";
     print_path_len(tour, dist);
 
-    // 4点を選んで交換し、経路が短くなったら経路を更新する。
-    change_four(tour, cities, dist, N);
+    /* 2組の辺を選び、交換した方が経路が短くなったら経路を更新する */
+    two_opt(tour, cities, dist, N);
 
     std::cout << "after opt: ";
     print_path_len(tour, dist);
+
     write_tour(tour, argv[1]);
 
     return 0;
