@@ -108,38 +108,34 @@ void *my_malloc(size_t size) {
   for(; heap_idx < 4; heap_idx++) {
     my_heap = &my_heaps[heap_idx];
 
-  // 空き領域の先頭
-  metadata = my_heap->free_head;
-  prev = NULL;
-  // Best-fit: Find the smallest free slot the object fits.
-  my_metadata_t initial;
-  initial.size = SIZE_MAX;
-  initial.next = NULL;
-  best_metadata = &initial;
-  best_prev = NULL;
-// printf("debug00\n");
-  while (metadata) {
-    if (metadata->size >= size && metadata->size < best_metadata->size) {
-      best_metadata = metadata;
-      best_prev = prev;
-      if(metadata->size == size) break;
-    }
-    prev = metadata;
-    metadata = metadata->next;  
-  }
+    // 空き領域の先頭
+    metadata = my_heap->free_head;
+    prev = NULL;
+    // Best-fit: Find the smallest free slot the object fits.
+    my_metadata_t initial;
+    initial.size = SIZE_MAX;
+    initial.next = NULL;
+    best_metadata = &initial;
+    best_prev = NULL;
 
-  if(best_metadata->size!=SIZE_MAX || heap_idx==3) break;
-  else continue;
+    while (metadata) {
+      if (metadata->size >= size && metadata->size < best_metadata->size) {
+        best_metadata = metadata;
+        best_prev = prev;
+        if(metadata->size == size) break;
+      }
+      prev = metadata;
+      metadata = metadata->next;  
+    }
+
+    if(best_metadata->size!=SIZE_MAX || heap_idx==3) break;
+    else continue;
   }
   // now, best_metadata points to the best-fit free slot
   // metadata points to NULL
   // and best_prev is the previous entry of best_metadata.
   
-// printf("best_metadata->next: %p\n", best_metadata->next);
-// printf("debug01\n");
-  
   if (best_metadata->size == SIZE_MAX) {
-// printf("debug02\n");
     // There was no free slot available. We need to request a new memory region
     // from the system by calling mmap_from_system().
     //
@@ -157,7 +153,6 @@ void *my_malloc(size_t size) {
     // Now, try my_malloc() again. This should succeed.  
     return my_malloc(size);
   }
-// printf("debug03\n");
 
   // best_metadata, best_prev の名前を変更する
   metadata = best_metadata;
@@ -174,9 +169,6 @@ void *my_malloc(size_t size) {
   size_t remaining_size = metadata->size - size;
   metadata->size = size;
 
-// printf("debug05\n");
-// print_free_list();
-
   if (remaining_size > sizeof(my_metadata_t)) {
   // printf("debug: remaining_size\n");
     // Create a new metadata for the remaining free slot.
@@ -187,16 +179,11 @@ void *my_malloc(size_t size) {
     //                 <------><---------------------->
     //                   size       remaining size
     my_metadata_t *new_metadata = (my_metadata_t *)((char *)ptr + size);
-// printf("ptr: %p\n", ptr);
-// printf("size: %ld\n", size);
-// printf("new_metadata: %p\n", new_metadata);
     new_metadata->size = remaining_size - sizeof(my_metadata_t);
     new_metadata->next = NULL;
     // Add the remaining free slot to the free list.
     my_add_to_free_list(new_metadata);
   }
-  
-// printf("debug06\n");
   
   return ptr;
 }
