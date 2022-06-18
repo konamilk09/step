@@ -1,14 +1,11 @@
 //
 // >>>> malloc challenge! <<<<
 //
+// ~ freelist bin ~
 // Your task is to improve utilization and speed of the following malloc
 // implementation.
 // Initial implementation is the same as the one implemented in simple_malloc.c.
 // For the detailed explanation, please refer to simple_malloc.c.
-
-// !! this code took 11minutes to finish challenge #1
-// !! 1 minute to finish #2 & #3
-// !! 1 minute to #4
 
 #include <assert.h>
 #include <stdbool.h>
