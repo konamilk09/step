@@ -1,7 +1,7 @@
 //
 // >>>> malloc challenge! <<<<
 // 
-// ~ merge ~
+// ~ merge right ~
 // Your task is to improve utilization and speed of the following malloc
 // implementation.
 // Initial implementation is the same as the one implemented in simple_malloc.c.
@@ -45,6 +45,7 @@ typedef struct my_heap_t {
 //
 // There are four free list bins
 my_heap_t my_heaps[4];
+int count = 0;
 
 //
 // Helper functions (feel free to add/remove/edit!)
@@ -78,34 +79,45 @@ void my_remove_from_free_list(my_metadata_t *metadata, my_metadata_t *prev, my_h
   metadata->next = NULL;
 }
 
-void merge_right(my_metadata_t *base_metadata) {
+// 右側に free slot があったら 1 、なかったら 0 を返す
+int merge_right(my_metadata_t *base_metadata) {
   // 右側に free slot があるか
   my_metadata_t *right_metadata;
   right_metadata = (my_metadata_t *)((char *)base_metadata + sizeof(my_metadata_t) + base_metadata->size);
-  if (!right_metadata->next || right_metadata->size<=0 || right_metadata->size>=4096) return;
-
-// printf("right_metadata: %p\n", right_metadata);
-// printf("right_metadata->size: %ld\n", right_metadata->size);
-// printf("right_metadata->next: %p\n", (char *)right_metadata->next);
-
-// printf("in merge\n");
-  // find the prev of right_metadata
   my_heap_t *my_heap;
   int right_idx = get_heap_idx(&right_metadata->size);
   my_heap = &my_heaps[right_idx];
+  if (!right_metadata->next && right_metadata!=my_heap->free_head) return 0;
+  if (right_metadata->size<=0 || right_metadata->size>=1000000000000000) return 0; // 18桁まで
   my_metadata_t *metadata = my_heap->free_head;
   my_metadata_t *prev = NULL;
   while (metadata) {
     if (metadata == right_metadata) break;
     prev = metadata;
-    metadata = metadata->next;  
+    metadata = metadata->next;
   }
 
   // 右側の free slot をリストから消す
   my_remove_from_free_list(right_metadata, prev, my_heap);
   // metadata の size を更新
-  base_metadata->size = base_metadata->size + right_metadata->size + sizeof(my_metadata_t);
-  return;
+  base_metadata->size += right_metadata->size + sizeof(my_metadata_t);
+  return 1;
+}
+
+void print_free_lists() {
+  int heap_idx;
+  my_heap_t *my_heap;
+  my_metadata_t *metadata;
+  for(heap_idx = 0; heap_idx < 4; heap_idx++) {
+    my_heap = &my_heaps[heap_idx];
+    metadata = my_heap->free_head;
+    printf("---heap%d---\n", heap_idx);
+    while (metadata) {
+      printf("metadata: %p\n", metadata);
+      printf("size: %ld\n", metadata->size);
+      metadata = metadata->next;  
+    }
+  }
 }
 
 //
@@ -136,7 +148,6 @@ void *my_malloc(size_t size) {
   my_metadata_t *best_metadata;
   my_metadata_t *best_prev;
 
-// printf("malloc: debug00\n");
   for(; heap_idx < 4; heap_idx++) {
     my_heap = &my_heaps[heap_idx];
 
@@ -149,12 +160,16 @@ void *my_malloc(size_t size) {
     initial.next = NULL;
     best_metadata = &initial;
     best_prev = NULL;
+    count++;
+// printf("count: %d\n", count);
+// if(count == 8352) print_free_lists();
     while (metadata) {
       if (metadata->size >= size && metadata->size < best_metadata->size) {
         best_metadata = metadata;
         best_prev = prev;
         if(metadata->size == size) break;
       }
+//!!ここ!!
       prev = metadata;
       metadata = metadata->next;  
     }
@@ -167,7 +182,7 @@ void *my_malloc(size_t size) {
   // and best_prev is the previous entry of best_metadata.
   
 // printf("best_metadata->next: %p\n", best_metadata->next);
-// printf("debug01\n");
+// printf("debug02\n");
   
   if (best_metadata->size == SIZE_MAX) {
 // printf("debug02\n");
@@ -184,6 +199,7 @@ void *my_malloc(size_t size) {
     metadata->size = buffer_size - sizeof(my_metadata_t);
     metadata->next = NULL;
     // Add the memory region to the free list.
+// printf("debug01\n");
     my_add_to_free_list(metadata);
     // Now, try my_malloc() again. This should succeed.  
     return my_malloc(size);
@@ -219,12 +235,10 @@ void *my_malloc(size_t size) {
     //                 <------><---------------------->
     //                   size       remaining size
     my_metadata_t *new_metadata = (my_metadata_t *)((char *)ptr + size); // char * にキャストすることで、+1 したら 1バイト増えるようにしている（size 分増える）
-// printf("ptr: %p\n", ptr);
-// printf("size: %ld\n", size);
-// printf("new_metadata: %p\n", new_metadata);
     new_metadata->size = remaining_size - sizeof(my_metadata_t);
     new_metadata->next = NULL;
     // Add the remaining free slot to the free list.
+// printf("debug02\n");
     my_add_to_free_list(new_metadata);
   }
   
@@ -245,7 +259,6 @@ void my_free(void *ptr) {
 // printf("free\n");
 
   merge_right(metadata);
-
   // Add the free slot to the free list.
   my_add_to_free_list(metadata);
 }
@@ -258,6 +271,29 @@ void my_finalize() {
 
 void test() {
   // Implement here!
-  assert(1 == 1); /* 1 is 1. That's always true! (You can remove this.) */
+  // void *ptr1 = my_malloc(1000);
+  // void *ptr2 = my_malloc(2000);
+  // print_free_lists();
+  // printf("\n");
+  // void *ptr3 = my_malloc(3000);
+  // print_free_lists();
+  // printf("\n");
+  // void *ptr4 = my_malloc(4000);
+  // print_free_lists();
+  // void *ptr5 = my_malloc(1010);
+  // printf("\n");
+  // my_free(ptr2);
+  // print_free_lists();
+  // printf("\n");
+  // my_free(ptr3);
+  // print_free_lists();
+  // printf("\n");
+  // my_free(ptr4);
+  // print_free_lists();
+  // printf("\n");
+  // my_free(ptr1);
+  // print_free_lists();
+  // printf("\n");
+  // exit(EXIT_SUCCESS);
 }
 
