@@ -197,14 +197,8 @@ void *my_malloc(size_t size) {
 
   my_metadata_t *metadata;
   my_metadata_t *prev;
-  my_metadata_t *best_metadata;
-  my_metadata_t *best_prev;
-  // Best-fit の初期値
-  my_metadata_t initial;
-  initial.size = SIZE_MAX;
-  initial.next = NULL;
-  best_metadata = &initial;
-  best_prev = NULL;
+  my_metadata_t *best_metadata = NULL;
+  my_metadata_t *best_prev = NULL;
 
   for(; heap_idx < 5; heap_idx++) {
     my_heap = &my_heaps[heap_idx];
@@ -213,24 +207,22 @@ void *my_malloc(size_t size) {
     metadata = my_heap->free_head;
     prev = NULL;
     // Best-fit: Find the smallest free slot the object fits.
-
     while (metadata) {
-      if (metadata->size >= size && metadata->size < best_metadata->size) {
+      if (metadata->size >= size && (!best_metadata || (best_metadata && metadata->size < best_metadata->size))) {
         best_metadata = metadata;
         best_prev = prev;
-        if(metadata->size == size) break;
       }
       prev = metadata;
       metadata = metadata->next;  
     }
-    if(best_metadata->size!=SIZE_MAX || heap_idx==4) break;
+    if(best_metadata || heap_idx==4) break;
     else continue;
   }
   // now, best_metadata points to the best-fit free slot
   // metadata points to NULL
   // and best_prev is the previous entry of best_metadata.
 
-  if (best_metadata->size == SIZE_MAX) {
+  if (!best_metadata) {
     // There was no free slot available. We need to request a new memory region
     // from the system by calling mmap_from_system().
     //
@@ -293,10 +285,8 @@ void my_free(void *ptr) {
   //     metadata   ptr
   my_metadata_t *metadata = (my_metadata_t *)ptr - 1;
 
-  // merge_right(metadata);
-  // // Add the free slot to the free list.
-  // my_add_to_free_list(metadata);
-  // merge_left(metadata);
+  // if there are free slots next to the ptr, 
+  // merge them and add it to the free list
   merge(metadata);
 }
 

@@ -207,37 +207,22 @@ void *my_malloc(size_t size) {
     metadata = my_heap->free_head;
     prev = NULL;
     // Best-fit: Find the smallest free slot the object fits.
-    my_metadata_t initial;
-    initial.size = SIZE_MAX;
-    initial.next = NULL;
-    best_metadata = &initial;
-    best_prev = NULL;
-    count++;
-// printf("count: %d\n", count);
-// if(count == 8352) print_free_lists();
     while (metadata) {
-      if (metadata->size >= size && metadata->size < best_metadata->size) {
+      if (metadata->size >= size && (!best_metadata || (best_metadata && metadata->size < best_metadata->size))) {
         best_metadata = metadata;
         best_prev = prev;
-        if(metadata->size == size) break;
       }
-//!!ここ!!
       prev = metadata;
       metadata = metadata->next;  
     }
-
-    if(best_metadata->size!=SIZE_MAX || heap_idx==3) break;
-    else continue;
+    if(best_metadata || heap_idx==3) break;
+    else continue;  
   }
   // now, best_metadata points to the best-fit free slot
   // metadata points to NULL
   // and best_prev is the previous entry of best_metadata.
   
-// printf("best_metadata->next: %p\n", best_metadata->next);
-// printf("debug02\n");
-  
-  if (best_metadata->size == SIZE_MAX) {
-// printf("debug02\n");
+  if (!best_metadata) {
     // There was no free slot available. We need to request a new memory region
     // from the system by calling mmap_from_system().
     //
@@ -251,12 +236,10 @@ void *my_malloc(size_t size) {
     metadata->size = buffer_size - sizeof(my_metadata_t);
     metadata->next = NULL;
     // Add the memory region to the free list.
-// printf("debug01\n");
     my_add_to_free_list(metadata);
     // Now, try my_malloc() again. This should succeed.  
     return my_malloc(size);
   }
-// printf("debug03\n");
 
   // best_metadata, best_prev の名前を変更する
   metadata = best_metadata;
@@ -274,11 +257,7 @@ void *my_malloc(size_t size) {
   size_t remaining_size = metadata->size - size;
   metadata->size = size;
 
-// printf("debug05\n");
-// print_free_list();
-
   if (remaining_size > sizeof(my_metadata_t)) {
-  // printf("debug: remaining_size\n");
     // Create a new metadata for the remaining free slot.
     //
     // ... | metadata | object | metadata | free slot | ...
@@ -290,11 +269,8 @@ void *my_malloc(size_t size) {
     new_metadata->size = remaining_size - sizeof(my_metadata_t);
     new_metadata->next = NULL;
     // Add the remaining free slot to the free list.
-// printf("debug02\n");
     my_add_to_free_list(new_metadata);
   }
-  
-// printf("debug06\n");
   
   return ptr;
 }
@@ -308,14 +284,12 @@ void my_free(void *ptr) {
   //     ^          ^
   //     metadata   ptr
   my_metadata_t *metadata = (my_metadata_t *)ptr - 1;
-// printf("free\n");
 
   merge_right(metadata);
   // Add the free slot to the free list.
   my_add_to_free_list(metadata);
 
   merge_left(metadata);
-// printf("debug03\n");
 }
 
 // This is called at the end of each challenge.
