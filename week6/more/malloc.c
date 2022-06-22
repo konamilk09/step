@@ -44,7 +44,7 @@ typedef struct my_heap_t {
 // Static variables (DO NOT ADD ANOTHER STATIC VARIABLES!)
 //
 // There are four free list bins
-my_heap_t my_heaps[4];
+my_heap_t my_heaps[5];
 
 //
 // Helper functions (feel free to add/remove/edit!)
@@ -52,10 +52,11 @@ my_heap_t my_heaps[4];
 
 int get_heap_idx(size_t *size){
   int heap_idx;
-  if (*size <= 256) heap_idx = 0;
-  else if (*size <= 512) heap_idx = 1;
-  else if (*size <= 1024) heap_idx = 2;
-  else heap_idx = 3;
+  if (*size <= 64) heap_idx = 0;
+  else if (*size <= 256) heap_idx = 1;
+  else if (*size <= 512) heap_idx = 2;
+  else if (*size <= 1024) heap_idx = 3;
+  else heap_idx = 4;
   return heap_idx;
 }
 
@@ -79,6 +80,13 @@ void my_remove_from_free_list(my_metadata_t *metadata, my_metadata_t *prev, my_h
 }
 
 void merge(my_metadata_t *base_metadata) {
+  // base_metadata の右隣と左隣に空き領域があるかを見る
+  // 
+  // ... | left_metadata | slot | base_metadata | object | right_metadata | slot | ...
+  //     ^                      ^               ^        ^
+  //     left_metadata          base_metadata   ptr      right_metadata
+  //
+
   int if_right = 0;
   int if_left = 0;
   int heap_idx;
@@ -93,8 +101,8 @@ void merge(my_metadata_t *base_metadata) {
 
   // base_metadata の右隣
   right_metadata = (my_metadata_t *)((char *)base_metadata + sizeof(my_metadata_t) + base_metadata->size);
-
-  for(heap_idx = 0; heap_idx < 4; heap_idx++) {
+  // free lists を全て見る
+  for(heap_idx = 0; heap_idx < 5; heap_idx++) {
     my_heap = &my_heaps[heap_idx];
     metadata = my_heap->free_head;
     prev = NULL;
@@ -103,11 +111,13 @@ void merge(my_metadata_t *base_metadata) {
       right = (my_metadata_t *)((char *)metadata + sizeof(my_metadata_t) + metadata->size);
       // right_metadata のひとつ前が分かる
       if (metadata == right_metadata) {
+        assert(if_right == 0);
         right_prev = prev;
         if_right = 1;
       }
       // metadata の右隣が base_metadata (= base_metadata の左隣が metadata)
       if (right == base_metadata) {
+        assert(if_left == 0);
         left_metadata = metadata;
         left_prev = prev;
         if_left = 1;
@@ -159,7 +169,7 @@ void print_free_lists() {
   int heap_idx;
   my_heap_t *my_heap;
   my_metadata_t *metadata;
-  for(heap_idx = 0; heap_idx < 4; heap_idx++) {
+  for(heap_idx = 0; heap_idx < 5; heap_idx++) {
     my_heap = &my_heaps[heap_idx];
     metadata = my_heap->free_head;
     printf("---heap%d---\n", heap_idx);
@@ -177,7 +187,7 @@ void print_free_lists() {
 
 // This is called at the beginning of each challenge.
 void my_initialize() {
-  for(int i = 0; i < 4; i++) {
+  for(int i = 0; i < 5; i++) {
     my_heaps[i].free_head = &my_heaps[i].dummy;
     my_heaps[i].dummy.size = 0;
     my_heaps[i].dummy.next = NULL;
@@ -199,23 +209,25 @@ void *my_malloc(size_t size) {
   my_metadata_t *best_metadata = NULL;
   my_metadata_t *best_prev = NULL;
 
-  for(; heap_idx < 4; heap_idx++) {
+  for(; heap_idx < 5; heap_idx++) {
     my_heap = &my_heaps[heap_idx];
 
     // 空き領域の先頭
     metadata = my_heap->free_head;
     prev = NULL;
     // Best-fit: Find the smallest free slot the object fits.
+
     while (metadata) {
-      if (metadata->size >= size && (!best_metadata || (best_metadata && metadata->size < best_metadata->size))) {
+      if (metadata->size >= size && 
+        (!best_metadata || (best_metadata && metadata->size < best_metadata->size))) {
         best_metadata = metadata;
         best_prev = prev;
       }
       prev = metadata;
       metadata = metadata->next;  
     }
-    if(best_metadata || heap_idx==3) break;
-    else continue;
+    // 後でheap_idx を使うため、4になったら break している
+    if(best_metadata || heap_idx==4) break;
   }
   // now, best_metadata points to the best-fit free slot
   // metadata points to NULL
@@ -234,8 +246,11 @@ void *my_malloc(size_t size) {
     my_metadata_t *metadata = (my_metadata_t *)mmap_from_system(buffer_size);
     metadata->size = buffer_size - sizeof(my_metadata_t);
     metadata->next = NULL;
+    printf("wanted size: %ld\n", size);
+    print_free_lists();
+    printf("\n");
     // Add the memory region to the free list.
-    my_add_to_free_list(metadata);
+    merge(metadata);
     // Now, try my_malloc() again. This should succeed.  
     return my_malloc(size);
   }
@@ -245,30 +260,35 @@ void *my_malloc(size_t size) {
   prev = best_prev;
 
   // |ptr| is the beginning of the allocated object.
-  //
-  // ... | metadata | object | ...
-  //     ^          ^
-  //     metadata   ptr
+  // Put object in the last part of the free slot.
+  // ... | metadata |   the free slot    | ...
+  //                <------------------->
+  //                 metadata_size
+  // ... | free slot | metadata | object | ...
+  //     ^           ^          ^
+  //     metadata    new        ptr
+  //    <----------->           <-------->
+  //    remaining size            size
   // Remove the free slot from the free list.
   // metadata の部分は free list 情報で必要になるから取っておく
-  void *ptr = metadata + 1;
-  my_remove_from_free_list(metadata, prev, &my_heaps[heap_idx]);
   size_t remaining_size = metadata->size - size;
-  metadata->size = size;
+  void *ptr = (my_metadata_t *)((char *)metadata + remaining_size + sizeof(my_metadata_t));
+  my_remove_from_free_list(metadata, prev, &my_heaps[heap_idx]);
+  my_metadata_t *new_metadata = (my_metadata_t *)((char *)metadata + remaining_size);
+  new_metadata->size = size;
+  new_metadata->next = NULL;
 
   if (remaining_size > sizeof(my_metadata_t)) {
     // Create a new metadata for the remaining free slot.
     //
-    // ... | metadata | object | metadata | free slot | ...
-    //     ^          ^        ^
-    //     metadata   ptr      new_metadata
-    //                 <------><---------------------->
-    //                   size       remaining size
-    my_metadata_t *new_metadata = (my_metadata_t *)((char *)ptr + size); // char * にキャストすることで、+1 したら 1バイト増えるようにしている（size 分増える）
-    new_metadata->size = remaining_size - sizeof(my_metadata_t);
-    new_metadata->next = NULL;
+    // ... | metadata | free slot | metadata | object | ...
+    //     ^                      ^          ^
+    //     metadata               new        ptr
+    //    <---------------------->           <-------->
+    //        remaining size                   size
+    metadata->size = remaining_size - sizeof(my_metadata_t);
     // Add the remaining free slot to the free list.
-    my_add_to_free_list(new_metadata);
+    my_add_to_free_list(metadata);
   }
   
   return ptr;
@@ -287,6 +307,7 @@ void my_free(void *ptr) {
   // if there are free slots next to the ptr, 
   // merge them and add it to the free list
   merge(metadata);
+  // my_add_to_free_list(metadata);
 }
 
 // This is called at the end of each challenge.
@@ -301,13 +322,10 @@ void test() {
   // void *ptr2 = my_malloc(200);
   // void *ptr3 = my_malloc(300);
   // void *ptr4 = my_malloc(400);
-  // my_free(ptr1);
+  // my_free(ptr2);
   // print_free_lists();
   // printf("\n");
   // my_free(ptr3);
-  // print_free_lists();
-  // printf("\n");
-  // my_free(ptr2);
   // print_free_lists();
   // printf("\n");
   // exit(EXIT_SUCCESS);
