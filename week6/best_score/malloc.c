@@ -1,7 +1,7 @@
 //
 // >>>> malloc challenge! <<<<
 // 
-// ~ reverse ptr, more bins, 
+// ~ reverse ptr, more bins, treat large size special ~
 // Your task is to improve utilization and speed of the following malloc
 // implementation.
 // Initial implementation is the same as the one implemented in simple_malloc.c.
@@ -103,7 +103,7 @@ void merge(my_metadata_t *base_metadata) {
   // base_metadata の右隣
   right_metadata = (my_metadata_t *)((char *)base_metadata + sizeof(my_metadata_t) + base_metadata->size);
   // free lists を全て見る
-  for(heap_idx = 0; heap_idx < 34; heap_idx++) {
+  for (heap_idx = 0; heap_idx < 34; heap_idx++) {
     my_heap = &my_heaps[heap_idx];
     metadata = my_heap->free_head;
     prev = NULL;
@@ -186,7 +186,7 @@ void print_free_lists() {
 
 // This is called at the beginning of each challenge.
 void my_initialize() {
-  for(int i = 0; i < 34; i++) {
+  for (int i = 0; i < 34; i++) {
     my_heaps[i].dummy.size = 0;
     my_heaps[i].dummy.next = NULL;
     my_heaps[i].free_head = &my_heaps[i].dummy;
@@ -201,7 +201,7 @@ void my_initialize() {
 void *my_malloc(size_t size) {
 
   // size が大きいときは直接OSに要求し、freeするときも直接OSに返す
-  if(size>=35200) {
+  if (size >= 3520) {
     size_t buffer_size = 4096;
     my_metadata_t *metadata = (my_metadata_t *)mmap_from_system(buffer_size);
     metadata->size = 4000;
@@ -220,7 +220,7 @@ void *my_malloc(size_t size) {
   my_metadata_t *best_fit = NULL;
   my_metadata_t *best_prev = NULL;
 
-  for(; heap_idx < 34; heap_idx++) {
+  for (; heap_idx < 34; heap_idx++) {
     my_heap = &my_heaps[heap_idx];
 
     // 空き領域の先頭
@@ -239,7 +239,7 @@ void *my_malloc(size_t size) {
       metadata = metadata->next;  
     }
     // 後でheap_idx を使うため、4になったら break している
-    if (best_fit || heap_idx==33) break;
+    if (best_fit || heap_idx == 33) break;
   }
   // now, best_fit points to the best_fit free slot
   // metadata points to NULL
@@ -316,7 +316,7 @@ void my_free(void *ptr) {
   //     metadata   ptr
   my_metadata_t *metadata = (my_metadata_t *)ptr - 1;
 
-  if (metadata->size >= 35200 && metadata->next==(my_metadata_t *)-1) {
+  if (metadata->size >= 3520 && metadata->next == (my_metadata_t *)-1) {
     size_t buffer_size = 4096;
     munmap_to_system(metadata, buffer_size);
     return;
