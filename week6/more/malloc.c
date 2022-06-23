@@ -246,9 +246,6 @@ void *my_malloc(size_t size) {
     my_metadata_t *metadata = (my_metadata_t *)mmap_from_system(buffer_size);
     metadata->size = buffer_size - sizeof(my_metadata_t);
     metadata->next = NULL;
-    printf("wanted size: %ld\n", size);
-    print_free_lists();
-    printf("\n");
     // Add the memory region to the free list.
     merge(metadata);
     // Now, try my_malloc() again. This should succeed.  
@@ -272,13 +269,16 @@ void *my_malloc(size_t size) {
   // Remove the free slot from the free list.
   // metadata の部分は free list 情報で必要になるから取っておく
   size_t remaining_size = metadata->size - size;
-  void *ptr = (my_metadata_t *)((char *)metadata + remaining_size + sizeof(my_metadata_t));
-  my_remove_from_free_list(metadata, prev, &my_heaps[heap_idx]);
-  my_metadata_t *new_metadata = (my_metadata_t *)((char *)metadata + remaining_size);
-  new_metadata->size = size;
-  new_metadata->next = NULL;
+  void *ptr;
+  my_metadata_t *new_metadata;
 
   if (remaining_size > sizeof(my_metadata_t)) {
+    ptr = (my_metadata_t *)((char *)metadata + remaining_size + sizeof(my_metadata_t));
+    new_metadata = (my_metadata_t *)((char *)metadata + remaining_size);
+    new_metadata->size = size;
+    new_metadata->next = NULL;
+
+    my_remove_from_free_list(metadata, prev, &my_heaps[heap_idx]);
     // Create a new metadata for the remaining free slot.
     //
     // ... | metadata | free slot | metadata | object | ...
@@ -289,6 +289,10 @@ void *my_malloc(size_t size) {
     metadata->size = remaining_size - sizeof(my_metadata_t);
     // Add the remaining free slot to the free list.
     my_add_to_free_list(metadata);
+  } 
+  else {
+    ptr = metadata + 1;
+    my_remove_from_free_list(metadata, prev, &my_heaps[heap_idx]);
   }
   
   return ptr;
