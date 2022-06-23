@@ -1,7 +1,7 @@
 //
 // >>>> malloc challenge! <<<<
 // 
-// ~ merge ~ my_heaps[4]
+// ~ reverse ptr, more bins, 
 // Your task is to improve utilization and speed of the following malloc
 // implementation.
 // Initial implementation is the same as the one implemented in simple_malloc.c.
