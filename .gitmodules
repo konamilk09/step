@@ -1,0 +1,3 @@
+[submodule "week6/malloc_challenge"]
+	path = week6/malloc_challenge
+	url = https://github.com/hikalium/malloc_challenge.git
