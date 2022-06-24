@@ -353,19 +353,19 @@ void my_finalize() {
 
 void test() {
   // Implement here!
-  void *ptr1 = my_malloc(100);
-  void *ptr2 = my_malloc(200);
-  void *ptr3 = my_malloc(300);
-  void *ptr4 = my_malloc(4000);
-  my_free(ptr2);
-  print_free_lists();
-  printf("\n");
-  my_free(ptr3);
-  print_free_lists();
-  printf("\n");
-  my_free(ptr4);
-  print_free_lists();
-  printf("\n");
-  exit(EXIT_SUCCESS);
+  // void *ptr1 = my_malloc(100);
+  // void *ptr2 = my_malloc(200);
+  // void *ptr3 = my_malloc(300);
+  // void *ptr4 = my_malloc(4000);
+  // my_free(ptr2);
+  // print_free_lists();
+  // printf("\n");
+  // my_free(ptr3);
+  // print_free_lists();
+  // printf("\n");
+  // my_free(ptr4);
+  // print_free_lists();
+  // printf("\n");
+  // exit(EXIT_SUCCESS);
 }
 

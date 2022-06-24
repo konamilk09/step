@@ -1,5 +1,23 @@
 # Real malloc challenge!
 
+## My description
+`dinamic/malloc.c`についてです。
+
+### やろうとしたこと
+やろうとしていることは、ルールから外れてしまっているかもしれないです。
+#### 動機
+小さいサイズのデータをばかりをmallocするとき、`my_metadata_t`のサイズの割合が多くなってしまって使用効率が良くならなかったので、`my_metadata_t`のサイズを減らせないか考えました。
+#### 説明
+`my_metadata_t`はfree slotまたはobjectの大きさと、次のfree slotへのポインタから成り立っています。objectととしてメモリを使用している時は次のfree slotへのポインタは必要ないので、objectとして使用している時はmetadataはobjectのサイズだけ保持するようにしようとしました。
+
+### 起きるエラー
+```
+malloc_challenge.bin: main.c:233: run_challenge: Assertion `0' failed.
+make: *** [Makefile:16: run] Aborted
+```
+と出てきます。
+
+
 ## Instruction
 
 Your task is implement a better malloc logic in [malloc.c](malloc.c) to improve the speed and memory usage.
