@@ -7,6 +7,8 @@
 // Initial implementation is the same as the one implemented in simple_malloc.c.
 // For the detailed explanation, please refer to simple_malloc.c.
 
+// https://jamboard.google.com/d/1FMJW0ujEN5qdr9mKcpN1rVfcNkIQw-IEpc2XS1RPpZ8/viewer?f=0
+
 #include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -332,7 +334,7 @@ void my_free(void *ptr) {
   my_metadata_t *metadata = (my_metadata_t *)((char *)ptr - sizeof(metadata));
   if (metadata->size >= 3520 && metadata->next == (my_metadata_t *)-1) {
     size_t buffer_size = 4096;
-printf("a:\n");
+// printf("a:\n");
     munmap_to_system(metadata, buffer_size);
     return;
   }
