@@ -1,4 +1,4 @@
-# STEP2022 week5 homework
+# STEP2022 week7 homework
 ## homework1
 ### 予想
 行列積のループ順序は実行速度が速い順に<br>
