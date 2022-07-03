@@ -32,6 +32,10 @@
 - 以上を50個体の子供分行う
 - 親が重複する可能性はある
 
+## 参考にしたもの
+- [Anna Satoさん](https://github.com/llannasatoll/step2022/tree/main/week5)
+- [week5 homework review](https://docs.google.com/presentation/d/1CkgQ8HfPm6YZouknVQ38zu_y5Xz9xW6RffBfZI6ekqI/edit?resourcekey=0-dYmET4F4PzKbWTp7tIfNng#slide=id.g897153bb92_0_535)
+
 ## 実行方法
 ```
 g++ two_opt.cpp
